@@ -1,0 +1,6 @@
+I was able to compile the config tool by doing something like this. I can't remember how I did it exactly. If you manage to do it, please make a pull request with the instructions.
+
+gcc -O2 -g -D_GNU_SOURCE -I/usr/include/where/your/kernel/header/files/are -c -o swlib.o swlib.c
+gcc -O2 -g -D_GNU_SOURCE -I/usr/include/where/your/kernel/header/files/are -c -o cli.o cli.c
+gcc swlib.o cli.o -Llibnl3-gen -Llibnl-3 -o swconfig
+

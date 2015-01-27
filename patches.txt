@@ -1,0 +1,111 @@
+diff --git a/drivers/net/phy/Kconfig b/drivers/net/phy/Kconfig
+index 342561a..9b3e117 100644
+--- a/drivers/net/phy/Kconfig
++++ b/drivers/net/phy/Kconfig
+ <at>  <at>  -12,6 +12,12  <at>  <at>  menuconfig PHYLIB
+
+ if PHYLIB
+
++config SWCONFIG
++	tristate "Switch configuration API"
++	---help---
++	  Switch configuration API using netlink. This allows
++	  you to configure the VLAN features of certain switches.
++
+ comment "MII PHY device drivers"
+
+ config AT803X_PHY
+diff --git a/drivers/net/phy/Makefile b/drivers/net/phy/Makefile
+index 23a2ab2..268c7de 100644
+--- a/drivers/net/phy/Makefile
++++ b/drivers/net/phy/Makefile
+ <at>  <at>  -3,6 +3,7  <at>  <at> 
+ libphy-objs			:= phy.o phy_device.o mdio_bus.o
+
+ obj-$(CONFIG_PHYLIB)		+= libphy.o
++obj-$(CONFIG_SWCONFIG)		+= swconfig.o
+ obj-$(CONFIG_MARVELL_PHY)	+= marvell.o
+ obj-$(CONFIG_DAVICOM_PHY)	+= davicom.o
+ obj-$(CONFIG_CICADA_PHY)	+= cicada.o
+diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
+index 115add2..0a995be 100644
+--- a/include/uapi/linux/Kbuild
++++ b/include/uapi/linux/Kbuild
+ <at>  <at>  -363,6 +363,7  <at>  <at>  header-y += stddef.h
+ header-y += string.h
+ header-y += suspend_ioctls.h
+ header-y += swab.h
++header-y += swconfig.h
+ header-y += synclink.h
+ header-y += sysctl.h
+ header-y += sysinfo.h
+diff --git a/drivers/net/phy/Kconfig b/drivers/net/phy/Kconfig
+index 9b3e117..d02ed5a 100644
+--- a/drivers/net/phy/Kconfig
++++ b/drivers/net/phy/Kconfig
+ <at>  <at>  -192,6 +192,8  <at>  <at>  config MDIO_BUS_MUX_MMIOREG
+ 
+ 	  Currently, only 8-bit registers are supported.
+ 
++source "drivers/net/phy/b53/Kconfig"
++
+ endif # PHYLIB
+ 
+ config MICREL_KS8995MA
+diff --git a/drivers/net/phy/Makefile b/drivers/net/phy/Makefile
+index 268c7de..1998034 100644
+--- a/drivers/net/phy/Makefile
++++ b/drivers/net/phy/Makefile
+ <at>  <at>  -11,6 +11,7  <at>  <at>  obj-$(CONFIG_LXT_PHY)		+= lxt.o
+ obj-$(CONFIG_QSEMI_PHY)		+= qsemi.o
+ obj-$(CONFIG_SMSC_PHY)		+= smsc.o
+ obj-$(CONFIG_VITESSE_PHY)	+= vitesse.o
++obj-$(CONFIG_B53)		+= b53/
+ obj-$(CONFIG_BROADCOM_PHY)	+= broadcom.o
+ obj-$(CONFIG_BCM63XX_PHY)	+= bcm63xx.o
+ obj-$(CONFIG_BCM87XX_PHY)	+= bcm87xx.o
+diff --git a/drivers/net/phy/b53/Kconfig b/drivers/net/phy/b53/Kconfig
+new file mode 100644
+index 0000000..4cbcd7e
+--- /dev/null
++++ b/drivers/net/phy/b53/Kconfig
+ <at>  <at>  -0,0 +1,25  <at>  <at> 
++menuconfig B53
++	tristate "Broadcom bcm53xx managed switch support"
++	depends on SWCONFIG
++	help
++	  This driver adds support for Broadcom managed switch chips. It supports
++	  BCM5325E, BCM5365, BCM539x, BCM53115 and BCM53125 as well as BCM63XX
++	  integrated switches.
++
++config B53_SPI_DRIVER
++	tristate "B53 SPI connected switch driver"
++	depends on B53 && SPI
++	help
++	  Select to enable support for registering switches configured
++	  through SPI.
++
++config B53_PHY_DRIVER
++	tristate "B53 MDIO connected switch driver"
++	depends on B53
++	select B53_PHY_FIXUP
++	help
++	  Select to enable support for registering switches configured
++	  through MDIO.
++
++config B53_PHY_FIXUP
++	bool
+diff --git a/drivers/net/phy/b53/Makefile b/drivers/net/phy/b53/Makefile
+new file mode 100644
+index 0000000..ceb21d4
+--- /dev/null
++++ b/drivers/net/phy/b53/Makefile
+ <at>  <at>  -0,0 +1,8  <at>  <at> 
++obj-$(CONFIG_B53)		+= b53_common.o
++
++obj-$(CONFIG_B53_PHY_FIXUP)	+= b53_phy_fixup.o
++
++obj-$(CONFIG_B53_PHY_DRIVER)	+= b53_mdio.o
++obj-$(CONFIG_B53_SPI_DRIVER)	+= b53_spi.o
++
++ccflags-y			+= -Werror
